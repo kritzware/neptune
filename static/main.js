@@ -12,36 +12,71 @@ console.log('Neptune init')
 // editor.setTheme("ace/theme/monokai")
 // editor.session.setMode("ace/mode/javascript")
 
-// pass options to ace.edit
-const editor = ace.edit('editor', {
-    mode: "ace/mode/javascript",
-    selectionStyle: "text"
-})
-
-// use setOptions method to set several options at once
-editor.setOptions({
+function createEditor(selector) {
+  const editor = ace.edit(selector, {
+    mode: 'ace/mode/javascript',
+    selectionStyle: 'text',
     autoScrollEditorIntoView: true,
     copyWithEmptySelection: true,
-});
+    fontSize: '15px',
+    fontFamily: 'DroidSansMono',
+  })
 
-// some options are also available as methods e.g. 
-editor.setTheme('ace/theme/dracula');
+  editor.session.$worker.send('changeOptions', [{ asi: true }])
 
-editor.commands.addCommand({
+  editor.commands.addCommand({
     name: 'runCell',
-    bindKey: {win: 'Ctrl-Enter',  mac: 'Command-Enter'},
+    bindKey: { win: 'Ctrl-Enter', mac: 'Command-Enter' },
     exec: function(editor) {
-        const content = editor.getValue()
-        postData('http://localhost:3000/build', { content })
-            .then(res => {
-                console.log(res)
-            })
-            .catch(err => {
-                console.log(err)
-            })
+      const content = editor.getValue()
+      postData('http://localhost:3000/build', { content })
+        .then(res => {
+          console.log(res)
+        })
+        .catch(err => {
+          console.log(err)
+        })
     },
-    readOnly: true // false if this command should not apply in readOnly mode
-});
+    readOnly: true, // false if this command should not apply in readOnly mode
+  })
+
+  editor.setTheme('ace/theme/dracula')
+
+  return editor
+}
+
+const editors = {}
+const cells = 2
+
+for (let i = 0; i < cells; i++) {
+  const n = i + 1
+  editors[`editor-${n}`] = createEditor(`editor-${n}`)
+}
+
+const output1 = ace.edit('output-1', {
+  mode: 'ace/mode/javascript',
+  selectionStyle: 'text',
+  autoScrollEditorIntoView: true,
+  copyWithEmptySelection: true,
+  // fontSize: '15px',
+  fontFamily: 'consolas',
+  readOnly: true,
+})
+output1.setOptions({
+  showLineNumbers: false,
+  showGutter: false,
+})
+
+output1.setValue('Hello world! \n { id: 1, hello: "world" }')
+output1.setHighlightActiveLine(false)
+output1.setShowPrintMargin(false)
+
+// pass options to ace.edit
+
+// use setOptions method to set several options at once
+
+// some options are also available as methods e.g.
+// editor.setTheme('ace/theme/github')
 
 // postData('http://example.com/answer', {answer: 42})
 //   .then(data => console.log(data)) // JSON from `response.json()` call
@@ -55,12 +90,11 @@ function postData(url, data) {
     credentials: 'same-origin', // include, same-origin, *omit
     headers: {
       'user-agent': 'Mozilla/4.0 MDN Example',
-      'content-type': 'application/json'
+      'content-type': 'application/json',
     },
     method: 'POST', // *GET, POST, PUT, DELETE, etc.
     mode: 'cors', // no-cors, cors, *same-origin
     redirect: 'follow', // manual, *follow, error
     referrer: 'no-referrer', // *client, no-referrer
-  })
-  .then(response => response.json()) // parses response to JSON
+  }).then(response => response.json()) // parses response to JSON
 }
